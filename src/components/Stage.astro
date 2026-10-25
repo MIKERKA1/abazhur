@@ -1,0 +1,117 @@
+---
+// The half of the screen that never moves on a desktop: the club itself. It shows the floor plan at night,
+// then crossfades to the picture that matches the section being read (data-scene on each section).
+import { Picture } from 'astro:assets';
+import HallPlan from './HallPlan.astro';
+import { photos } from '../data/photos';
+import { site } from '../data/club';
+
+const scenes = [
+  ['keyboard', photos.keyboard],
+  ['lamp', photos.lamp],
+  ['lampRoom', photos.lampRoom],
+] as const;
+---
+
+<div class="stage dark" data-stage data-scene="plan" aria-hidden="true">
+  <div class="stage__scene stage__scene--plan" data-for="plan">
+    <div class="stage__plan"><HallPlan /></div>
+    <p class="stage__note">Свет горит там, где сейчас играют. Это пример, а не живые данные.</p>
+  </div>
+  {scenes.map(([name, ph]) => (
+    <div class="stage__scene" data-for={name}>
+      <Picture src={ph.src} alt="" formats={['avif', 'webp']} widths={[720, 1080, 1440]} sizes="50vw" loading="lazy" class="stage__img" />
+    </div>
+  ))}
+  <span class="stage__cursor"></span>
+  <p class="stage__bar"><span>Круглосуточно</span><span>{site.address.street.replace('переулок', 'пер.')}</span></p>
+</div>
+
+<style>
+  .stage {
+    position: sticky; top: var(--header-h);
+    height: calc(100svh - var(--header-h));
+    overflow: hidden;
+    container-type: size;
+  }
+  .stage__scene { position: absolute; inset: 0 0 3.5rem; opacity: 0; transition: opacity 1.4s var(--ease); }
+  .stage[data-scene='plan'] [data-for='plan'],
+  .stage[data-scene='keyboard'] [data-for='keyboard'],
+  .stage[data-scene='lamp'] [data-for='lamp'],
+  .stage[data-scene='lampRoom'] [data-for='lampRoom'] { opacity: 1; }
+  .stage__scene :global(picture), .stage__scene :global(img) { width: 100%; height: 100%; object-fit: cover; }
+
+  .stage__plan { position: absolute; inset: 0 0 3rem; display: grid; place-items: center; font-size: min(2.9cqw, 1.75cqh); }
+  .stage__note { position: absolute; left: 1.25rem; right: 1.25rem; bottom: 0.9rem; font-size: var(--step-small); color: var(--lamp-2); }
+
+  /* The visitor's own lamp: a pool of light that follows a mouse pointer over the plan. */
+  .stage__cursor {
+    position: absolute; left: 0; top: 0; width: 22rem; height: 22rem; border-radius: 50%;
+    translate: calc(var(--x, -50rem) - 50%) calc(var(--y, -50rem) - 50%);
+    background: radial-gradient(circle, rgb(244 221 180 / 0.13), transparent 65%); /* taste-skill-ignore: lamp light is the subject */
+    pointer-events: none;
+    transition: opacity 0.6s;
+  }
+  .stage:not([data-scene='plan']) .stage__cursor { opacity: 0; }
+
+  .stage__bar {
+    position: absolute; inset: auto 0 0; z-index: 2;
+    display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    height: 3.5rem; padding-inline: 1.25rem;
+    background: var(--paper); color: var(--ink);
+    font-size: 1rem; font-weight: 600;
+  }
+
+  @media (max-width: 960px) {
+    .stage { height: 54svh; top: var(--header-h); }
+    .stage__plan { font-size: min(3.2cqw, 1.75cqh); }
+    .stage__note { display: none; }
+  }
+</style>
+
+<script>
+  import { takenSeats, isoDay } from '../lib/pricing';
+  import { prefersReducedMotion } from '../lib/motion';
+
+  const stage = document.querySelector<HTMLElement>('[data-stage]');
+  if (stage) {
+    /* ---- Opening: every lamp switches on in a loose wave, then only the occupied ones stay lit ---- */
+    const lamps = [...stage.querySelectorAll<HTMLElement>('.seat')];
+    const now = new Date();
+    const taken = takenSeats(isoDay(now), now.getHours());
+    const settle = () => lamps.forEach((l) => l.toggleAttribute('data-on', taken.has(l.dataset.seat!)));
+    if (prefersReducedMotion()) settle();
+    else {
+      const order = lamps.map((l, i) => ({ l, k: ((i * 7919) % 31) / 31 })).sort((a, b) => a.k - b.k);
+      order.forEach(({ l }, i) => setTimeout(() => l.setAttribute('data-on', ''), 350 + i * 55));
+      setTimeout(() => {
+        order.forEach(({ l }, i) => !taken.has(l.dataset.seat!) && setTimeout(() => l.removeAttribute('data-on'), i * 40));
+      }, 350 + lamps.length * 55 + 900);
+    }
+
+    /* ---- The picture follows the section being read ---- */
+    const sections = [...document.querySelectorAll<HTMLElement>('[data-scene]:not([data-stage])')];
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          const el = e.target as HTMLElement;
+          stage.dataset.scene = el.dataset.scene!;
+          stage.dataset.focus = el.dataset.zone ?? '';
+        }
+      },
+      { rootMargin: '-45% 0px -50% 0px' },
+    );
+    sections.forEach((s) => io.observe(s));
+
+    /* ---- A lamp in the visitor's hand, only with a real mouse ---- */
+    if (matchMedia('(hover: hover) and (pointer: fine)').matches && !prefersReducedMotion()) {
+      stage.addEventListener('pointermove', (e) => {
+        const r = stage.getBoundingClientRect();
+        stage.style.setProperty('--x', `${e.clientX - r.left}px`);
+        stage.style.setProperty('--y', `${e.clientY - r.top}px`);
+      });
+      stage.addEventListener('pointerleave', () => stage.style.removeProperty('--x'));
+    }
+  }
+</script>

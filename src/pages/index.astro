@@ -1,0 +1,63 @@
+---
+import Base from '../layouts/Base.astro';
+import Stage from '../components/Stage.astro';
+import Hero from '../components/home/Hero.astro';
+import Zones from '../components/home/Zones.astro';
+import Gear from '../components/home/Gear.astro';
+import Prices from '../components/home/Prices.astro';
+import FirstVisit from '../components/home/FirstVisit.astro';
+import Booking from '../components/home/Booking.astro';
+import Gallery from '../components/home/Gallery.astro';
+import Faq from '../components/home/Faq.astro';
+import Visit from '../components/home/Visit.astro';
+import Footer from '../components/Footer.astro';
+import MobileBar from '../components/MobileBar.astro';
+import { withBase } from '../lib/url';
+---
+
+<Base>
+  <div class="split">
+    <div class="read">
+      <Hero />
+      <section class="intro" data-scene="plan" aria-label="О клубе" data-reveal>
+        <p class="intro__first">
+          В обычном компьютерном клубе горит общий свет под потолком, вдоль стен неон и сорок мониторов в ряд. У нас верхний свет приглушён, а над каждым столом висит своя лампа с тканевым абажуром.
+        </p>
+        <p>Экран не бликует, глаза устают меньше, и даже в полном зале у вас остаётся свой угол. До соседа полтора метра, а не локоть.</p>
+        <p>Компьютеры при этом серьёзные: видеокарты RTX 5070 и 5080, мониторы на 240 и 360 Гц. Каждое утро администратор проверяет все места и ставит обновления.</p>
+        <p>
+          Можно прийти одному на пару часов, вчетвером в комнату с PlayStation или впятером в отдельный буткемп. Чай, лимонады и горячие сэндвичи на баре у входа.
+          <a href={withBase('/#vizit')}>Как пройдёт первый визит</a>
+        </p>
+      </section>
+      <Zones />
+      <Gear />
+      <Prices />
+      <FirstVisit />
+    </div>
+    <Stage />
+  </div>
+  <Booking />
+  <Gallery />
+  <Faq />
+  <Visit />
+  <Fragment slot="after">
+    <Footer />
+    <MobileBar />
+  </Fragment>
+</Base>
+
+<style>
+  .split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+  .read { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--section); padding-inline: var(--gutter); padding-bottom: 0; }
+  .read > :global(*:last-child) { margin-bottom: 0; }
+  .intro { display: grid; gap: 1.25rem; max-width: 36ch; font-size: var(--step-body); }
+  .intro__first { font-weight: 500; font-size: var(--step-body); }
+  .intro a { font-weight: 600; }
+
+  @media (max-width: 960px) {
+    .split { grid-template-columns: minmax(0, 1fr); }
+    .split > :global(.stage) { grid-row: 1; z-index: 0; }
+    .read { grid-row: 2; position: relative; z-index: 1; background: var(--paper); gap: clamp(5rem, 16vw, 7rem); }
+  }
+</style>

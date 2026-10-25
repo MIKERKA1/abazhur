@@ -1,0 +1,38 @@
+---
+// The phone's way to book from anywhere on the page. Hidden over the booking form and the footer.
+import { withBase } from '../lib/url';
+import { rub, zones } from '../data/club';
+---
+
+<div class="mbar dark" data-mbar>
+  <p class="mbar__price">от {rub(zones[0]!.day)} в час</p>
+  <a class="btn mbar__cta" href={withBase('/#bron')}>Выбрать место</a>
+</div>
+
+<style>
+  .mbar { display: none; }
+  @media (max-width: 960px) {
+    .mbar {
+      position: fixed; inset: auto 0 0; z-index: 15;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+      padding: 0.6rem 0.6rem calc(0.6rem + env(safe-area-inset-bottom)) var(--gutter);
+      transition: translate 0.35s var(--ease);
+    }
+    .mbar[data-hidden] { translate: 0 110%; }
+    .mbar__price { font-weight: 600; }
+    .mbar__cta { min-height: 3rem; }
+  }
+</style>
+
+<script>
+  const bar = document.querySelector<HTMLElement>('[data-mbar]');
+  const targets = [...document.querySelectorAll('#bron, footer')];
+  if (bar && targets.length) {
+    const visible = new Set<Element>();
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => (e.isIntersecting ? visible.add(e.target) : visible.delete(e.target)));
+      bar.toggleAttribute('data-hidden', visible.size > 0);
+    });
+    targets.forEach((t) => io.observe(t));
+  }
+</script>

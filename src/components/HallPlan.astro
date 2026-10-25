@@ -1,0 +1,110 @@
+---
+// The floor plan of the club. One component for two jobs: a decorative drawing in the stage panel
+// (lamps light up as the page loads) and the seat picker in the booking form, where every lamp is a checkbox.
+import Seat from './Seat.astro';
+import { seats } from '../data/club';
+
+interface Props {
+  interactive?: boolean;
+}
+const { interactive = false } = Astro.props;
+const islands = Array.from({ length: 5 }, (_, i) => seats.hall.slice(i * 4, i * 4 + 4));
+---
+
+<div class:list={['plan', { 'plan--live': interactive }]} data-plan aria-hidden={interactive ? undefined : 'true'}>
+  <div class="room room--camp" data-zone="camp">
+    <p class="room__name">Буткемп</p>
+    <div class="camp">{seats.camp.map((id) => <Seat id={id} zone="camp" interactive={interactive} />)}</div>
+  </div>
+
+  <div class="room room--hall" data-zone="hall">
+    <p class="room__name">Зал</p>
+    <div class="hall">
+      {islands.map((four) => (
+        <div class="island">{four.map((id, i) => <Seat id={id} zone="hall" interactive={interactive} down={i > 1} />)}</div>
+      ))}
+      <div class="bar"><span>Бар</span></div>
+    </div>
+  </div>
+
+  <div class="rooms">
+    {seats.room.map((id) => (
+      <div class="room room--ps" data-zone="room">
+        <Seat id={id} zone="room" interactive={interactive} room />
+        <span class="sofa"></span>
+      </div>
+    ))}
+  </div>
+  <p class="door">Вход с Лампадного переулка</p>
+</div>
+
+<style>
+  .plan {
+    display: grid;
+    gap: 1.4em;
+    width: 28em;
+    color: var(--lamp);
+    line-height: 1.2;
+  }
+  .room {
+    position: relative;
+    padding: 0.9em 1.1em 1.1em;
+    background: var(--room-2);
+    transition: opacity 0.6s var(--ease);
+  }
+  .room__name, .door, .bar span { font-size: max(13px, 0.8em); color: var(--lamp-2); }
+  .room__name { margin-bottom: 0.7em; }
+  .door { text-align: center; transition: opacity 0.6s var(--ease); }
+
+  .camp { display: flex; justify-content: space-between; }
+  .hall { display: grid; grid-template-columns: repeat(3, auto); justify-content: space-between; row-gap: 1.6em; }
+  .island { display: grid; grid-template-columns: repeat(2, 3.6em); gap: 0.25em; }
+  .bar { display: grid; place-items: center; background: #34201f; }
+  .rooms { display: grid; grid-template-columns: 1fr 1fr; gap: 1.4em; }
+  .room--ps { display: grid; gap: 0.6em; padding-top: 1.1em; }
+  .sofa { height: 1.6em; margin-inline: 1.2em; background: #3c2626; border-radius: 0.5em 0.5em 0 0; }
+
+  /* A seat is a desk with a lamp over its outer edge; the glow is the pool of light the lamp throws. */
+  .plan :global(.seat) { position: relative; display: block; width: 3.6em; height: 3.8em; -webkit-tap-highlight-color: transparent; }
+  .plan :global(.seat--room) { width: auto; height: 3.6em; }
+  .plan :global(.seat input) { position: absolute; inset: 0; z-index: 3; width: 100%; height: 100%; opacity: 0; margin: 0; cursor: pointer; }
+  .plan :global(.seat__desk) {
+    position: absolute; inset: 1.3em 0 0;
+    display: grid; place-items: center;
+    background: #3d2829;
+    transition: background-color 0.3s;
+  }
+  .plan :global(.seat--down .seat__desk) { inset: 0 0 1.3em; }
+  .plan :global(.seat__id) { font-size: max(13px, 0.85em); font-weight: 600; color: var(--lamp-2); }
+  .plan :global(.seat__lamp), .plan :global(.seat__glow) { position: absolute; left: 50%; top: 0.55em; border-radius: 50%; translate: -50% -50%; pointer-events: none; }
+  .plan :global(.seat--down .seat__lamp), .plan :global(.seat--down .seat__glow) { top: auto; bottom: 0.55em; translate: -50% 50%; }
+  .plan :global(.seat__lamp) { z-index: 1; width: 1.1em; height: 1.1em; background: #4d3534; transition: background-color 0.4s; }
+  .plan :global(.seat__glow) {
+    z-index: 2; width: 7em; height: 7em; opacity: 0;
+    /* The one gradient on the site: it is the light of the lamp, the subject of the page. */
+    background: radial-gradient(circle, rgb(244 221 180 / 0.42) /* taste-skill-ignore: lamp light is the subject */, rgb(244 221 180 / 0.1) 45%, transparent 70%);
+    transition: opacity 0.5s var(--ease);
+  }
+
+  .plan :global(.seat[data-on] .seat__lamp) { background: var(--lamp); }
+  .plan :global(.seat[data-on] .seat__glow) { opacity: 1; }
+
+  /* Picker states. Taken seats keep a dimmed lamp: someone is already playing there. */
+  .plan--live :global(.seat:has(input:not(:disabled):not(:checked)):hover .seat__desk) { background: #573a39; }
+  .plan--live :global(.seat:has(input:focus-visible)) { outline: 3px solid var(--lamp); outline-offset: 2px; }
+  .plan--live :global(.seat:has(input:checked) .seat__desk) { background: var(--lamp); }
+  .plan--live :global(.seat:has(input:checked) .seat__id) { color: var(--room); }
+  .plan--live :global(.seat:has(input:checked) .seat__lamp) { background: var(--lamp); }
+  .plan--live :global(.seat:has(input:checked) .seat__glow) { opacity: 1; }
+  .plan--live :global(.seat:has(input:disabled) input) { cursor: not-allowed; }
+  .plan--live :global(.seat:has(input:disabled) .seat__desk) { background: #261718; }
+  .plan--live :global(.seat:has(input:disabled) .seat__id) { color: #8d7270; text-decoration: line-through; }
+  .plan--live :global(.seat:has(input:disabled) .seat__lamp) { background: #8a6a52; }
+  .plan--live :global(.seat:has(input:disabled) .seat__glow) { opacity: 0.3; }
+
+  /* The zones tabs dim every other zone so the visitor sees where the chosen one sits in the club. */
+  :global([data-focus='hall']) .room:not([data-zone='hall']),
+  :global([data-focus='camp']) .room:not([data-zone='camp']),
+  :global([data-focus='room']) .room:not([data-zone='room']),
+  :global([data-focus]:not([data-focus=''])) .door { opacity: 0.25; }
+</style>

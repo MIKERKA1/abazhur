@@ -1,0 +1,105 @@
+---
+// A sideways row of mixed frames: tall, a stacked pair, wide. Drag it, scroll it, or arrow through it.
+import { Picture } from 'astro:assets';
+import { photos, type Photo } from '../../data/photos';
+
+type Module = { kind: 'tall' | 'wide'; ph: Photo } | { kind: 'pair'; ph: [Photo, Photo] };
+const modules: Module[] = [
+  { kind: 'tall', ph: photos.player2 },
+  { kind: 'pair', ph: [photos.headphones, photos.gamepad] },
+  { kind: 'wide', ph: photos.duo },
+  { kind: 'pair', ph: [photos.room, photos.shade] },
+  { kind: 'tall', ph: photos.lampRoom },
+  { kind: 'wide', ph: photos.friends },
+];
+const count = modules.reduce((n, m) => n + (m.kind === 'pair' ? 2 : 1), 0);
+---
+
+<section id="foto" class="gallery" aria-labelledby="foto-title">
+  <div class="gallery__head">
+    <h2 id="foto-title" class="h2">Настроение вечера</h2>
+    <p class="gallery__count">{count} фото</p>
+  </div>
+  <p class="gallery__note">Иллюстративные фото с Unsplash: другие клубы и вещи, похожие на наши. Сам «Абажур» вымышленный.</p>
+  <div class="row" tabindex="0" role="region" aria-label="Фотографии, прокручиваются в сторону" data-drag>
+    {modules.map((m) =>
+      m.kind === 'pair' ? (
+        <div class="mod mod--pair">
+          {m.ph.map((p) => <Picture src={p.src} alt={p.alt} widths={[480, 720]} sizes="(max-width: 960px) 64vw, 26vw" formats={['avif', 'webp']} loading="lazy" draggable="false" />)}
+        </div>
+      ) : (
+        <div class:list={['mod', `mod--${m.kind}`]}>
+          <Picture src={m.ph.src} alt={m.ph.alt} widths={m.kind === 'wide' ? [720, 1080, 1440] : [480, 720, 960]} sizes={m.kind === 'wide' ? '(max-width: 960px) 88vw, 60vw' : '(max-width: 960px) 72vw, 30vw'} formats={['avif', 'webp']} loading="lazy" draggable="false" />
+        </div>
+      ),
+    )}
+  </div>
+</section>
+
+<style>
+  .gallery { padding-block: var(--section); }
+  .gallery__head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding-inline: var(--gutter); }
+  .gallery__count { font-weight: 600; }
+  .gallery__note { padding-inline: var(--gutter); margin: 0.75rem 0 2rem; max-width: calc(52ch + var(--gutter) * 2); color: var(--ink-2); }
+  .row {
+    --h: min(68svh, 44rem);
+    display: flex; gap: 12px;
+    height: var(--h);
+    padding-inline: var(--gutter);
+    overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity; scroll-padding-inline: var(--gutter);
+    scrollbar-width: none;
+    cursor: grab;
+  }
+  .row::-webkit-scrollbar { display: none; }
+  .row.is-dragging { cursor: grabbing; scroll-snap-type: none; }
+  .row:focus-visible { outline-offset: -3px; }
+  .mod { flex: none; height: 100%; scroll-snap-align: start; overflow: hidden; }
+  .mod--tall { aspect-ratio: 3 / 4; }
+  .mod--wide { aspect-ratio: 16 / 10; }
+  .mod--pair { display: grid; grid-template-rows: 1fr 1fr; gap: 12px; aspect-ratio: 2 / 3; }
+  .mod :global(picture), .mod :global(img) { width: 100%; height: 100%; object-fit: cover; user-select: none; }
+  .mod :global(img) { transition: scale 1.2s var(--ease); }
+  .mod:hover :global(img) { scale: 1.03; }
+
+  /* On a phone every photo keeps its own proportions, so nothing is cropped: a landscape frame
+     fits the screen width whole, and the stacked pairs become two separate frames. */
+  @media (max-width: 960px) {
+    .row { --h: min(15rem, 58vw); gap: 8px; }
+    .mod, .mod--tall, .mod--wide { aspect-ratio: auto; width: auto; }
+    .mod--pair { display: contents; }
+    .mod--pair :global(picture) { flex: none; height: 100%; scroll-snap-align: start; }
+    .mod :global(img) { width: auto; height: 100%; object-fit: contain; }
+    .mod :global(picture) { width: auto; }
+  }
+</style>
+
+<script>
+  // Mouse drag scrolls the row; touch and trackpads already scroll it natively.
+  document.querySelectorAll<HTMLElement>('[data-drag]').forEach((row) => {
+    let x0 = 0;
+    let left0 = 0;
+    let moved = false;
+    row.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      x0 = e.clientX;
+      left0 = row.scrollLeft;
+      moved = false;
+      row.setPointerCapture(e.pointerId);
+      row.classList.add('is-dragging');
+    });
+    row.addEventListener('pointermove', (e) => {
+      if (!row.hasPointerCapture(e.pointerId)) return;
+      const dx = e.clientX - x0;
+      if (Math.abs(dx) > 3) moved = true;
+      row.scrollLeft = left0 - dx;
+    });
+    const end = (e: PointerEvent) => {
+      if (row.hasPointerCapture(e.pointerId)) row.releasePointerCapture(e.pointerId);
+      row.classList.remove('is-dragging');
+    };
+    row.addEventListener('pointerup', end);
+    row.addEventListener('pointercancel', end);
+    row.addEventListener('click', (e) => moved && e.preventDefault(), true);
+  });
+</script>

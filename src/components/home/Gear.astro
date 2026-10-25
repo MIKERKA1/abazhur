@@ -1,0 +1,60 @@
+---
+// Hardware set as a printed menu: name on the left, the value on the right, what it means underneath.
+import { Picture } from 'astro:assets';
+import { gear } from '../../data/club';
+import { photos } from '../../data/photos';
+import { zigzag } from '../../lib/zigzag';
+---
+
+<section id="zhelezo" class="gear" data-scene="keyboard" aria-labelledby="zhelezo-title">
+  <Picture src={photos.keyboard.src} alt={photos.keyboard.alt} formats={['avif', 'webp']} widths={[480, 960]} sizes="100vw" loading="lazy" class="gear__photo" />
+  <div class="sheet" data-clip={zigzag('both', 28, 9)} data-reveal>
+    <h2 id="zhelezo-title" class="sheet__title">Что на столе</h2>
+    <p class="sheet__intro">Объясняем без жаргона, что даёт каждая деталь.</p>
+    {gear.map((g) => (
+      <div class="group">
+        <h3 class="group__name">{g.group}</h3>
+        <ul role="list">
+          {g.rows.map((r) => (
+            <li class="item">
+              <p class="item__row"><span>{r.name}</span><span class="item__dots" aria-hidden="true"></span><strong>{r.value}</strong></p>
+              <p class="item__note">{r.note}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ))}
+  </div>
+</section>
+
+<style>
+  .gear {
+    display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center;
+    margin-inline: calc(var(--gutter) * -1);
+    padding: clamp(4rem, 8vw, 7rem) var(--gutter);
+    background: var(--ink);
+  }
+  .gear :global(.gear__photo) { display: none; }
+  .sheet {
+    width: min(100%, 36rem);
+    padding: 3.25rem clamp(1.25rem, 4vw, 3rem);
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .sheet__title { font-size: var(--step-head); text-align: center; }
+  .sheet__intro { text-align: center; margin: 0.75rem auto 2.5rem; max-width: 30ch; color: var(--ink-2); }
+  .group + .group { margin-top: 2.75rem; }
+  .group__name { font-size: var(--step-body); margin-bottom: 1rem; }
+  .item + .item { margin-top: 1.1rem; }
+  .item__row { display: flex; align-items: baseline; gap: 0.5rem; }
+  .item__row strong { font-weight: 600; text-align: right; }
+  .item__dots { flex: 1; min-width: 1rem; border-bottom: 3px dotted var(--ink-2); translate: 0 -0.3em; }
+  .item__note { font-size: 1rem; color: var(--ink-2); max-width: 34ch; }
+
+  @media (max-width: 960px) {
+    .gear { padding-top: 0; }
+    /* Astro puts the class on the <img>; the <picture> around it is the grid item. */
+    .gear > :global(picture) { justify-self: stretch; margin: 0 calc(var(--gutter) * -1) 2.5rem; }
+    .gear :global(.gear__photo) { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+  }
+</style>

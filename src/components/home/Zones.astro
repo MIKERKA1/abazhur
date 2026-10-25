@@ -1,0 +1,105 @@
+---
+import { Picture } from 'astro:assets';
+import { withBase } from '../../lib/url';
+import { rub, zones } from '../../data/club';
+import { photos } from '../../data/photos';
+
+const verb = { hall: 'Выбрать место в зале', camp: 'Выбрать места в буткемпе', room: 'Выбрать комнату' };
+---
+
+<section id="zony" class="zones" data-scene="plan" data-zone="hall" aria-labelledby="zony-title" data-zones>
+  <div data-reveal>
+    <h2 id="zony-title" class="h2">Три способа играть</h2>
+    <p class="zones__intro">Один на пару часов, командой из пяти или вчетвером на диване с геймпадами.</p>
+  </div>
+
+  <div class="tabs" role="tablist" aria-label="Зоны клуба" hidden data-tabs>
+    {zones.map((z, i) => (
+      <button class="tab" type="button" role="tab" id={`tab-${z.id}`} aria-controls={`zone-${z.id}`} aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1} data-tab={z.id}>
+        {z.tab}
+      </button>
+    ))}
+  </div>
+
+  {zones.map((z) => (
+    <div class="zone" id={`zone-${z.id}`} role="tabpanel" aria-labelledby={`tab-${z.id}`} data-panel={z.id}>
+      <Picture src={photos[z.photo].src} alt={z.photoAlt} formats={['avif', 'webp']} widths={[480, 720, 1080]} sizes="(max-width: 960px) 100vw, 46vw" loading="lazy" class="zone__img" />
+      <h3 class="zone__title">{z.title}</h3>
+      <p>{z.text}</p>
+      <p class="zone__price">
+        <strong>{rub(z.day)}</strong> в час днём в будни, <strong>{rub(z.evening)}</strong> вечером и в выходные, {z.unit}.
+      </p>
+      <div class="zone__actions">
+        <a class="btn" href={withBase('/#bron')} data-book-zone={z.id}>{verb[z.id]}</a>
+        <a class="btn btn--quiet" href={withBase('/#ceny')}>Все цены</a>
+      </div>
+    </div>
+  ))}
+</section>
+
+<style>
+  .zones { display: grid; gap: 2rem; }
+  .zones__intro { margin-top: 1rem; max-width: 40ch; }
+  .tabs { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+  .tabs[hidden] { display: none; }
+  .tab {
+    min-height: 2.75rem; padding: 0.5rem 1rem;
+    border: 0; background: none; color: var(--ink-2);
+    font-size: var(--step-body); font-weight: 500;
+    transition: background-color 0.25s, color 0.25s;
+  }
+  .tab:hover { color: var(--ink); background: var(--paper-2); }
+  .tab[aria-selected='true'] { background: var(--ink); color: var(--paper); font-weight: 600; }
+  .zone { display: grid; gap: 1.25rem; }
+  .zone + .zone { margin-top: 3rem; }
+  .js .zone + .zone { margin-top: 0; }
+  .zone[hidden] { display: none; }
+  .zone :global(.zone__img) { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+  .zone__title { font-size: var(--step-lead); }
+  .zone__price { color: var(--ink-2); }
+  .zone__price strong { color: var(--ink); }
+  .zone__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem; }
+  .zone__actions .btn { min-height: 4.25rem; }
+  @media (max-width: 520px) {
+    .zone__actions { grid-template-columns: 1fr; }
+    .zone__actions .btn { min-height: 3.5rem; }
+  }
+</style>
+
+<script>
+  import { reveal } from '../../lib/motion';
+
+  const root = document.querySelector<HTMLElement>('[data-zones]');
+  const list = root?.querySelector<HTMLElement>('[data-tabs]');
+  if (root && list) {
+    const tabs = [...list.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const panels = [...root.querySelectorAll<HTMLElement>('[data-panel]')];
+    const stage = document.querySelector<HTMLElement>('[data-stage]');
+
+    const select = (id: string, focus = false) => {
+      tabs.forEach((t) => {
+        const on = t.dataset.tab === id;
+        t.setAttribute('aria-selected', String(on));
+        t.tabIndex = on ? 0 : -1;
+        if (on && focus) t.focus();
+      });
+      panels.forEach((p) => (p.hidden = p.dataset.panel !== id));
+      root.dataset.zone = id;
+      // The stage dims the other zones on the plan while this section is on screen.
+      if (stage && stage.dataset.scene === 'plan') stage.dataset.focus = id;
+      reveal(panels.find((p) => p.dataset.panel === id) ?? null, 12);
+    };
+
+    list.hidden = false;
+    panels.forEach((p, i) => (p.hidden = i > 0));
+    tabs.forEach((t, i) => {
+      t.addEventListener('click', () => select(t.dataset.tab!));
+      t.addEventListener('keydown', (e) => {
+        const step = { ArrowRight: 1, ArrowLeft: -1, Home: -i, End: tabs.length - 1 - i }[e.key];
+        if (step === undefined) return;
+        e.preventDefault();
+        select(tabs[(i + step + tabs.length) % tabs.length]!.dataset.tab!, true);
+      });
+    });
+  }
+</script>

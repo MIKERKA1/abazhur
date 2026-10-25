@@ -1,0 +1,25 @@
+---
+// Questions and answers as reading text: everything is answered at a glance, nothing hides behind toggles.
+import { faq } from '../../data/club';
+---
+
+<section id="voprosy" class="faq" aria-labelledby="voprosy-title">
+  <h2 id="voprosy-title" class="h2">Вопросы новичков</h2>
+  <div class="faq__text" data-reveal>
+    {faq.map(([q, a]) => <p><strong>{q}</strong> {a}</p>)}
+  </div>
+</section>
+
+<style>
+  .faq {
+    display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 9fr); gap: 2rem clamp(2rem, 4vw, 4rem);
+    padding: var(--section) var(--gutter);
+    background: var(--paper-2);
+  }
+  .faq__text { columns: 2 22rem; column-gap: 3.5rem; font-size: var(--step-body); line-height: 1.55; }
+  .faq__text p { break-inside: avoid; margin-bottom: 1.25rem; }
+  .faq__text strong { font-weight: 600; }
+  @media (max-width: 960px) {
+    .faq { grid-template-columns: 1fr; }
+  }
+</style>

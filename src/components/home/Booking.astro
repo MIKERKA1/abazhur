@@ -1,0 +1,462 @@
+---
+// Seat booking. The plan is the form: each lamp is a checkbox. Price, package and saving update as you go.
+// It is a demo: nothing leaves the page, and the page says so before and after sending.
+import HallPlan from '../HallPlan.astro';
+import { withBase } from '../../lib/url';
+import { durations } from '../../lib/pricing';
+import { site } from '../../data/club';
+
+const hours = Array.from({ length: 24 }, (_, h) => h);
+---
+
+<section id="bron" class="booking dark" aria-labelledby="bron-title">
+  <div class="booking__head" data-reveal>
+    <h2 id="bron-title" class="h2" tabindex="-1">Забронировать место</h2>
+    <p class="booking__lead">Выберите время и нажмите на свободную лампу. Для компании отметьте несколько мест в одной зоне, цена посчитается сразу.</p>
+  </div>
+
+  <form class="bform" data-booking novalidate>
+    <fieldset class="bform__plan">
+      <legend class="visually-hidden">Место на плане клуба</legend>
+      <div class="bform__planbox"><HallPlan interactive /></div>
+      <ul class="legend small" role="list">
+        <li><span class="sw sw--free"></span>Свободно</li>
+        <li><span class="sw sw--mine"></span>Ваше место</li>
+        <li><span class="sw sw--taken"></span>Занято (для примера)</li>
+      </ul>
+      <p class="field__error" id="b-seats-err" data-error="seats"></p>
+      <p class="bform__notice small" data-notice aria-live="polite"></p>
+    </fieldset>
+
+    <div class="bform__side">
+      <div class="errors" data-errors tabindex="-1" hidden>
+        <p class="errors__title">Проверьте, пожалуйста:</p>
+        <ul data-errors-list></ul>
+      </div>
+
+      <fieldset class="bform__group">
+        <legend class="bform__legend">Когда</legend>
+        <div class="bform__row">
+          <div class="field">
+            <label class="field__label" for="b-date">День</label>
+            <input class="input" id="b-date" name="date" type="date" required aria-describedby="b-date-err" />
+            <p class="field__error" id="b-date-err" data-error="date"></p>
+          </div>
+          <div class="field">
+            <label class="field__label" for="b-hour">Во сколько</label>
+            <select class="input" id="b-hour" name="hour" required aria-describedby="b-hour-err b-hour-hint">
+              <option value="">Время</option>
+              {hours.map((h) => <option value={h}>{String(h).padStart(2, '0')}:00</option>)}
+            </select>
+            <p class="field__hint small" id="b-hour-hint" data-hour-hint hidden>Ночной пакет начинается в 23:00.</p>
+            <p class="field__error" id="b-hour-err" data-error="hour"></p>
+          </div>
+        </div>
+        <fieldset class="field">
+          <legend class="field__label">Сколько</legend>
+          <div class="chips">
+            {durations.map((d, i) => (
+              <label class="chip"><input type="radio" name="duration" value={d.value} checked={i === 1} /><span>{d.label}</span></label>
+            ))}
+          </div>
+        </fieldset>
+      </fieldset>
+
+      <fieldset class="bform__group">
+        <legend class="bform__legend">Кто придёт</legend>
+        <div class="bform__row">
+          <div class="field">
+            <label class="field__label" for="b-name">Имя</label>
+            <input class="input" id="b-name" name="name" type="text" autocomplete="given-name" spellcheck="false" required aria-describedby="b-name-err" />
+            <p class="field__error" id="b-name-err" data-error="name"></p>
+          </div>
+          <div class="field">
+            <label class="field__label" for="b-phone">Телефон</label>
+            <input class="input" id="b-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (900) 000-00-00" required aria-describedby="b-phone-err" />
+            <p class="field__error" id="b-phone-err" data-error="phone"></p>
+          </div>
+        </div>
+        <label class="check">
+          <input type="checkbox" id="b-consent" name="consent" required aria-describedby="b-consent-err" />
+          <span>Согласен на обработку имени и телефона для брони. <a href={withBase('/privacy/')}>Как мы обращаемся с данными</a></span>
+        </label>
+        <p class="field__error" id="b-consent-err" data-error="consent"></p>
+      </fieldset>
+
+      <div class="summary" data-summary aria-live="polite">
+        <p class="summary__what" data-s-what>Место пока не выбрано</p>
+        <p class="summary__total"><span>Итого</span><strong data-s-total>0 ₽</strong></p>
+        <p class="summary__when small" data-s-when></p>
+        <p class="summary__deal small" data-s-deal></p>
+      </div>
+
+      <button class="btn bform__submit" type="submit">Забронировать</button>
+      <p class="demo small">Это демо-сайт: бронь соберётся на этой странице и никуда не отправится. Можно позвонить: <a href={site.phone.href}>{site.phone.display}</a> (номер тоже демонстрационный).</p>
+    </div>
+  </form>
+
+  <div class="done" data-done hidden tabindex="-1" aria-labelledby="done-title">
+    <h3 id="done-title" class="done__title">Бронь собрана</h3>
+    <p>Это демо-сайт, поэтому бронь <strong>никуда не отправлена и нигде не сохранена</strong>. В рабочей версии клуб прислал бы SMS с подтверждением и держал бы место 15 минут после начала.</p>
+    <dl class="done__list" data-done-list></dl>
+    <div class="done__actions">
+      <button class="btn" type="button" data-edit>Изменить бронь</button>
+      <button class="btn btn--quiet" type="button" data-clear>Начать заново</button>
+    </div>
+  </div>
+</section>
+
+<style>
+  .booking { padding: var(--section) var(--gutter); }
+  .booking__head { max-width: 46rem; margin-bottom: clamp(2.5rem, 5vw, 4rem); }
+  .booking__head h2:focus { outline: none; }
+  .booking__lead { margin-top: 1rem; max-width: 46ch; }
+
+  .bform { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: clamp(2rem, 5vw, 5rem); align-items: start; }
+  fieldset { border: 0; padding: 0; min-width: 0; }
+  .bform__plan { position: sticky; top: calc(var(--header-h) + 1.5rem); display: grid; gap: 1rem; }
+  .bform__planbox { display: grid; justify-items: center; padding: clamp(1rem, 3vw, 2rem); background: #1e1113; font-size: clamp(12.5px, 1.25vw, 18px); }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; color: var(--lamp-2); }
+  .legend li { display: flex; align-items: center; gap: 0.5rem; }
+  .sw { width: 1rem; height: 1rem; border-radius: 50%; background: #4d3534; }
+  .sw--mine { background: var(--lamp); }
+  .sw--taken { background: #8a6a52; }
+  .bform__notice:empty { display: none; }
+  .bform__notice { color: var(--lamp); }
+
+  .bform__side { display: grid; gap: 2.25rem; }
+  .bform__group { display: grid; gap: 1.25rem; }
+  .bform__legend { font-size: var(--step-lead); font-weight: 600; margin-bottom: 0.25rem; }
+  .bform__row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .field { display: grid; gap: 0.4rem; align-content: start; }
+  .field__label { font-size: 1rem; font-weight: 600; }
+  .field__hint { color: var(--lamp-2); }
+  .field__error { color: #ffb4a8; font-size: 1rem; font-weight: 600; }
+  .field__error:empty { display: none; }
+  .input {
+    width: 100%; min-height: 3.25rem; padding: 0.6rem 0.9rem;
+    border: 2px solid #5a4241; border-radius: 0; background: #23151a; color: var(--lamp);
+    color-scheme: dark;
+  }
+  .input:hover { border-color: var(--lamp-2); }
+  .input:focus-visible { outline: 3px solid var(--lamp); outline-offset: 1px; border-color: var(--lamp); }
+  .input[aria-invalid='true'] { border-color: #ffb4a8; }
+  .input::placeholder { color: #9c8478; }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .chip { position: relative; }
+  .chip input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+  .chip span { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0.4rem 1rem; background: #2c1b1d; font-size: 1rem; transition: background-color 0.2s, color 0.2s; }
+  .chip:hover span { background: #3d2829; }
+  .chip input:checked + span { background: var(--lamp); color: var(--room); font-weight: 600; }
+  .chip input:focus-visible + span { outline: 3px solid var(--lamp); outline-offset: 2px; }
+  .chip input:disabled + span { opacity: 0.4; text-decoration: line-through; }
+  .chip:has(input:disabled) input { cursor: not-allowed; }
+  .check { display: flex; gap: 0.75rem; align-items: start; font-size: 1rem; }
+  .check input { width: 1.4rem; height: 1.4rem; margin-top: 0.15rem; flex: none; accent-color: var(--lamp); }
+
+  .errors { padding: 1rem 1.25rem; background: #3b1517; }
+  .errors:focus { outline: 3px solid var(--lamp); outline-offset: 3px; }
+  .errors__title { font-weight: 600; }
+  .errors ul { margin-top: 0.5rem; padding-left: 1.25rem; display: grid; gap: 0.25rem; }
+
+  .summary { padding: 1.5rem; background: var(--room-2); }
+  .summary__what { font-size: var(--step-lead); font-weight: 600; line-height: 1.2; }
+  .summary__when { margin-top: 0.75rem; color: var(--lamp-2); }
+  .summary__when:empty, .summary__deal:empty { display: none; }
+  .summary__total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 1.25rem; }
+  .summary__total strong { font-size: var(--step-head); font-weight: 600; letter-spacing: -0.02em; line-height: 1; }
+  .summary__deal { margin-top: 0.5rem; color: var(--lamp); }
+  .bform__submit { min-height: 3.75rem; }
+  .demo { color: var(--lamp-2); }
+  .demo a { white-space: nowrap; }
+
+  .done { max-width: 44rem; padding: clamp(1.5rem, 4vw, 3rem); background: var(--room-2); }
+  .done:focus { outline: none; }
+  .done__title { font-size: var(--step-head); margin-bottom: 1rem; }
+  .done__list { display: grid; grid-template-columns: auto 1fr; gap: 0.5rem 1.5rem; margin-block: 1.75rem; }
+  .done__list :global(dt) { color: var(--lamp-2); }
+  .done__list :global(dd) { font-weight: 600; }
+  .done__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+
+  @media (max-width: 960px) {
+    .bform { grid-template-columns: 1fr; }
+    .bform__plan { position: static; }
+    /* The plan is 28em wide: size the em so it fills a phone without spilling past the edge. */
+    .bform__planbox { margin-inline: calc(var(--gutter) * -1); padding-inline: 1rem; font-size: min(17px, calc((100vw - 3rem) / 28)); }
+  }
+  @media (max-width: 520px) {
+    .bform__row { grid-template-columns: 1fr; }
+  }
+</style>
+
+<script>
+  import { animate } from 'motion/mini';
+  import { dateRange, isoDay, nightAllowed, quote, takenSeats, validate, type BookingErrors, type Duration } from '../../lib/pricing';
+  import { formatPhone, maskPhone, normalizePhone } from '../../lib/phone';
+  import { NIGHT, rub, zoneById, type ZoneId } from '../../data/club';
+  import { EASE, focusQuietly, prefersReducedMotion, reveal } from '../../lib/motion';
+
+  const section = document.querySelector<HTMLElement>('#bron');
+  const form = section?.querySelector<HTMLFormElement>('[data-booking]');
+  const done = section?.querySelector<HTMLElement>('[data-done]');
+
+  if (section && form && done) {
+    const $ = <T extends Element>(s: string) => form.querySelector<T>(s)!;
+    const date = $<HTMLInputElement>('#b-date');
+    const hour = $<HTMLSelectElement>('#b-hour');
+    const name = $<HTMLInputElement>('#b-name');
+    const phone = $<HTMLInputElement>('#b-phone');
+    const consent = $<HTMLInputElement>('#b-consent');
+    const seatBoxes = [...form.querySelectorAll<HTMLInputElement>('input[name="seat"]')];
+    const durationBoxes = [...form.querySelectorAll<HTMLInputElement>('input[name="duration"]')];
+    const notice = $<HTMLElement>('[data-notice]');
+    const plan = $<HTMLElement>('[data-plan]');
+    let tried = false;
+    let dirty = false;
+
+    const now = () => new Date();
+    const range = dateRange(now());
+    date.min = range.min;
+    date.max = range.max;
+    date.value = range.min;
+    // The next full hour, so a visitor who opens the page now sees a slot they can still book.
+    hour.value = String((now().getHours() + 1) % 24);
+    if (hour.value === '0') date.value = isoDay(new Date(Date.now() + 86_400_000));
+
+    const picked = () => seatBoxes.filter((b) => b.checked);
+    const zone = () => (picked()[0]?.dataset.zone as ZoneId | undefined) ?? null;
+    const duration = (): Duration => {
+      const v = durationBoxes.find((b) => b.checked)?.value ?? '2';
+      return v === 'night' ? 'night' : (Number(v) as Duration);
+    };
+    const start = () => (date.value && hour.value !== '' ? new Date(`${date.value}T${hour.value.padStart(2, '0')}:00`) : null);
+
+    /* ---- Taken seats follow the chosen slot; a seat you had picked is released if it becomes taken ---- */
+    const syncTaken = () => {
+      if (!date.value || hour.value === '') return;
+      const taken = takenSeats(date.value, Number(hour.value));
+      const lost: string[] = [];
+      seatBoxes.forEach((b) => {
+        const isTaken = taken.has(b.value);
+        if (isTaken && b.checked) {
+          b.checked = false;
+          lost.push(b.value);
+        }
+        b.disabled = isTaken;
+        b.closest('.seat')!.querySelector('[data-seat-state]')!.textContent = isTaken ? ', занято' : '';
+      });
+      if (lost.length) notice.textContent = `На это время ${lost.length > 1 ? 'места' : 'место'} ${lost.join(', ')} уже ${lost.length > 1 ? 'заняты' : 'занято'}. Выберите другое.`;
+    };
+
+    /* ---- Rules that depend on the zone: one zone per booking, no night in the PS5 rooms ---- */
+    const syncRules = () => {
+      const z = zone();
+      const night = durationBoxes.find((b) => b.value === 'night')!;
+      night.disabled = z !== null && !nightAllowed(z);
+      if (night.disabled && night.checked) {
+        night.checked = false;
+        durationBoxes.find((b) => b.value === '3')!.checked = true;
+        notice.textContent = 'Комнаты с PS5 работают до 04:00, поэтому ночной пакет для них недоступен. Поставили 3 часа.';
+      }
+      const isNight = duration() === 'night';
+      if (isNight) hour.value = String(NIGHT.start);
+      hour.disabled = isNight;
+      form.querySelector<HTMLElement>('[data-hour-hint]')!.hidden = !isNight;
+    };
+
+    const when = (s: Date, d: Duration) => {
+      const day = s.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+      if (d === 'night') return `${day}, ночь с 23:00 до 08:00`;
+      const end = new Date(s);
+      end.setHours(s.getHours() + d);
+      const t = (x: Date) => x.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+      return `${day}, ${t(s)}–${t(end)}`;
+    };
+    const what = () => {
+      const seats = picked().map((b) => b.value);
+      const z = zone();
+      if (!z) return 'Место пока не выбрано';
+      if (z === 'room') return `Комната с PS5 ${seats.join(' и ')}`;
+      return `${zoneById(z)!.tab}, ${seats.length > 1 ? 'места' : 'место'} ${seats.join(', ')}`;
+    };
+
+    const totalEl = $<HTMLElement>('[data-s-total]');
+    let shown = 0;
+    const showTotal = (n: number | null) => {
+      if (n === null) {
+        totalEl.textContent = '0 ₽';
+        shown = 0;
+        return;
+      }
+      if (prefersReducedMotion() || shown === 0) totalEl.textContent = rub(n);
+      else {
+        // The sum rolls to its new value, so a change of seat or time is visible as a change.
+        const from = shown;
+        const t0 = performance.now();
+        const tick = (t: number) => {
+          const k = Math.min(1, (t - t0) / 400);
+          totalEl.textContent = rub(Math.round(from + (n - from) * (1 - (1 - k) ** 3)));
+          if (k < 1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }
+      shown = n;
+    };
+
+    const update = () => {
+      syncRules();
+      const s = start();
+      const z = zone();
+      const d = duration();
+      $<HTMLElement>('[data-s-what]').textContent = what();
+      $<HTMLElement>('[data-s-when]').textContent = s ? when(s, d) : '';
+      const q = z && s ? quote(z, s, d, picked().length) : null;
+      showTotal(q ? q.total : null);
+      $<HTMLElement>('[data-s-deal]').textContent = q?.package ? `Применили ${q.package}: на ${rub(q.saving)} дешевле, чем по часам.` : '';
+    };
+
+    /* ---- Errors: one message under each field plus a linked list at the top ---- */
+    const fieldFor: Record<keyof BookingErrors, HTMLElement> = { seats: seatBoxes.find((b) => !b.disabled) ?? seatBoxes[0]!, date, hour, name, phone, consent };
+    const showErrors = (errors: BookingErrors) => {
+      fieldFor.seats = seatBoxes.find((b) => !b.disabled) ?? seatBoxes[0]!;
+      (Object.keys(fieldFor) as (keyof BookingErrors)[]).forEach((key) => {
+        const msg = errors[key] ?? '';
+        form.querySelector<HTMLElement>(`[data-error="${key}"]`)!.textContent = msg;
+        if (key !== 'seats') msg ? fieldFor[key].setAttribute('aria-invalid', 'true') : fieldFor[key].removeAttribute('aria-invalid');
+      });
+      const box = $<HTMLElement>('[data-errors]');
+      const entries = Object.entries(errors) as [keyof BookingErrors, string][];
+      box.querySelector('[data-errors-list]')!.replaceChildren(
+        ...entries.map(([key, msg]) => {
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.href = key === 'seats' ? '#b-seats-err' : `#${fieldFor[key].id}`;
+          a.textContent = msg;
+          a.addEventListener('click', (e) => {
+            e.preventDefault();
+            fieldFor[key].focus();
+          });
+          li.append(a);
+          return li;
+        }),
+      );
+      box.hidden = entries.length === 0;
+      return box;
+    };
+    const input = () => ({
+      seats: picked().map((b) => b.value),
+      date: date.value,
+      hour: hour.value,
+      duration: String(duration()),
+      name: name.value,
+      phone: phone.value,
+      consent: consent.checked,
+    });
+
+    form.addEventListener('change', (e) => {
+      dirty = true;
+      const t = e.target as HTMLInputElement;
+      notice.textContent = '';
+      if (t.name === 'seat' && t.checked) {
+        // One zone per booking: prices differ between zones.
+        const other = seatBoxes.filter((b) => b.checked && b.dataset.zone !== t.dataset.zone);
+        if (other.length) {
+          other.forEach((b) => (b.checked = false));
+          notice.textContent = 'В одной брони места только из одной зоны: цены в зонах разные. Предыдущий выбор сняли.';
+        }
+        const lamp = t.closest('.seat')?.querySelector('.seat__glow');
+        if (lamp && !prefersReducedMotion()) animate(lamp, { scale: ['0.4', '1'] }, { duration: 0.5, ease: EASE });
+      }
+      if (t.name === 'date' || t.name === 'hour' || t.name === 'duration') {
+        syncRules();
+        syncTaken();
+      }
+      update();
+      if (tried) showErrors(validate(input(), now()));
+    });
+    form.addEventListener('input', (e) => {
+      if (tried && (e.target as HTMLElement).matches('#b-name, #b-phone')) showErrors(validate(input(), now()));
+    });
+    phone.addEventListener('blur', () => {
+      const digits = normalizePhone(phone.value);
+      if (digits) phone.value = formatPhone(digits);
+    });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      tried = true;
+      const data = input();
+      const errors = validate(data, now());
+      const box = showErrors(errors);
+      if (Object.keys(errors).length) {
+        box.scrollIntoView({ block: 'center' });
+        focusQuietly(box);
+        return;
+      }
+      // A working version would POST here to the club's booking system; see README → «Настоящая бронь».
+      const s = start()!;
+      const q = quote(zone()!, s, duration(), picked().length)!;
+      const rows: [string, string][] = [
+        ['Где', what()],
+        ['Когда', when(s, duration())],
+        ['Имя', data.name.trim()],
+        ['Телефон', maskPhone(normalizePhone(data.phone)!)],
+        ['Стоимость', `${rub(q.total)}${q.package ? `, ${q.package}` : ''}, оплата на выходе`],
+      ];
+      done.querySelector('[data-done-list]')!.replaceChildren(
+        ...rows.flatMap(([k, v]) => {
+          const dt = document.createElement('dt');
+          const dd = document.createElement('dd');
+          dt.textContent = k;
+          dd.textContent = v;
+          return [dt, dd];
+        }),
+      );
+      form.hidden = true;
+      done.hidden = false;
+      dirty = false;
+      reveal(done, 14);
+      done.scrollIntoView({ block: 'start' });
+      focusQuietly(done);
+    });
+
+    const backToForm = () => {
+      done.hidden = true;
+      form.hidden = false;
+      focusQuietly(date);
+    };
+    done.querySelector('[data-edit]')!.addEventListener('click', backToForm);
+    done.querySelector('[data-clear]')!.addEventListener('click', () => {
+      form.reset();
+      date.value = range.min;
+      hour.value = String((now().getHours() + 1) % 24);
+      tried = false;
+      showErrors({});
+      syncRules();
+      syncTaken();
+      update();
+      backToForm();
+    });
+
+    // Nothing is stored anywhere, so leaving with a half-filled form would lose it: the browser asks first.
+    addEventListener('beforeunload', (e) => {
+      if (dirty && !form.hidden && (name.value || phone.value)) e.preventDefault();
+    });
+
+    /* ---- «Выбрать место в зале» and friends point the plan at a zone ---- */
+    document.addEventListener('click', (e) => {
+      const link = (e.target as Element).closest<HTMLElement>('[data-book-zone]');
+      if (!link) return;
+      if (!done.hidden) backToForm();
+      const z = link.dataset.bookZone as ZoneId;
+      plan.dataset.focus = z;
+      notice.textContent = `Свободные места в зоне «${zoneById(z)!.tab}» подсвечены. Нажмите на лампу.`;
+      setTimeout(() => (plan.dataset.focus = ''), 3500);
+      setTimeout(() => focusQuietly(document.querySelector<HTMLElement>('#bron-title')), 0);
+    });
+
+    syncRules();
+    syncTaken();
+    update();
+  }
+</script>

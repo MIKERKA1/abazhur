@@ -1,0 +1,23 @@
+---
+// One place on the floor plan: a desk with a lamp over its outer edge. In the booking picker it is a checkbox.
+import type { ZoneId } from '../data/club';
+
+interface Props {
+  id: string;
+  zone: ZoneId;
+  interactive: boolean;
+  down?: boolean;
+  room?: boolean;
+}
+const { id, zone, interactive, down = false, room = false } = Astro.props;
+const Tag = interactive ? 'label' : 'span';
+const zoneName = { hall: 'зал', camp: 'буткемп', room: 'комната с PS5' }[zone];
+---
+
+<Tag class:list={['seat', { 'seat--down': down, 'seat--room': room }]} data-seat={id} data-zone={zone}>
+  {interactive && <input type="checkbox" name="seat" value={id} data-zone={zone} />}
+  <span class="seat__glow"></span>
+  <span class="seat__lamp"></span>
+  <span class="seat__desk"><span class="seat__id" aria-hidden="true">{room ? `${id} · PS5` : id}</span></span>
+  {interactive && <span class="visually-hidden">{zoneName}, {room ? 'комната' : 'место'} {id}<span data-seat-state></span></span>}
+</Tag>

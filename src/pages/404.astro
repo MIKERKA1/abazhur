@@ -1,0 +1,17 @@
+---
+import Base from '../layouts/Base.astro';
+import { withBase } from '../lib/url';
+---
+
+<Base title="Страница не найдена" noindex>
+  <section class="nf dark">
+    <h1>Такой страницы нет</h1>
+    <p>Похоже, ссылка устарела или в адресе опечатка. Свет в зале при этом горит.</p>
+    <a class="btn" href={withBase('/')}>На главную</a>
+  </section>
+</Base>
+
+<style>
+  .nf { display: grid; align-content: center; justify-items: start; gap: 1.5rem; min-height: calc(100svh - var(--header-h)); padding: 4rem var(--gutter); }
+  .nf h1 { font-size: var(--step-display); }
+</style>

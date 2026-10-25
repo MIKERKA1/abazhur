@@ -1,0 +1,97 @@
+---
+import { withBase } from '../lib/url';
+import Logo from './Logo.astro';
+import { nav, site } from '../data/club';
+
+const links = nav.map((item) => ({ ...item, href: withBase(item.href) }));
+---
+
+<header class="header">
+  <a href={withBase('/')} class="header__logo" aria-label="Абажур, на главную"><Logo /></a>
+  <nav class="header__nav" aria-label="Основное меню">
+    <ul role="list">
+      {links.map((item) => <li><a href={item.href}>{item.label}</a></li>)}
+    </ul>
+  </nav>
+  <a class="header__phone" href={site.phone.href}>{site.phone.display}</a>
+  <a class="btn header__cta" href={withBase('/#bron')}>Забронировать</a>
+  <button class="header__menu" type="button" data-menu-open aria-haspopup="dialog">Меню</button>
+</header>
+
+<dialog class="menu dark" data-menu aria-label="Меню сайта">
+  <div class="menu__top">
+    <Logo />
+    <button class="menu__close" type="button" data-menu-close>Закрыть</button>
+  </div>
+  <nav aria-label="Меню сайта">
+    <ul role="list" class="menu__links">
+      {links.map((item) => <li><a href={item.href} data-menu-link>{item.label}</a></li>)}
+      <li><a href={withBase('/#voprosy')} data-menu-link>Вопросы</a></li>
+    </ul>
+  </nav>
+  <div class="menu__bottom">
+    <a class="btn" href={withBase('/#bron')} data-menu-link>Забронировать место</a>
+    <a class="menu__phone" href={site.phone.href}>{site.phone.display}</a>
+    <p class="small muted">{site.address.street}. Открыто круглосуточно. Номер демонстрационный.</p>
+  </div>
+</dialog>
+
+<style>
+  .header {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; align-items: center; gap: clamp(1rem, 2.5vw, 2.5rem);
+    height: var(--header-h);
+    padding-inline: var(--gutter) 0;
+    background: var(--paper);
+  }
+  .header__logo { text-decoration: none; margin-right: auto; }
+  .header__nav ul { display: flex; gap: clamp(1rem, 2vw, 2rem); }
+  .header__nav a, .header__phone { font-size: 1rem; text-decoration: none; padding-block: 0.5rem; }
+  .header__nav a:hover, .header__phone:hover { text-decoration: underline; }
+  .header__phone { font-weight: 600; }
+  .header__cta { height: 100%; padding-inline: clamp(1.25rem, 2.5vw, 2.5rem); }
+  .header__menu { display: none; }
+
+  .menu { width: 100%; max-width: none; height: 100%; max-height: none; margin: 0; padding: 1.25rem var(--gutter) 2rem; border: 0; }
+  .menu[open] { display: flex; flex-direction: column; gap: 2.5rem; }
+  .menu::backdrop { background: rgb(23 13 14 / 0.6); }
+  .menu__top { display: flex; justify-content: space-between; align-items: center; }
+  .menu__close, .header__menu { min-height: 2.75rem; padding: 0.5rem 1rem; border: 0; background: color-mix(in oklab, var(--fg) 10%, var(--bg)); color: var(--fg); font-weight: 600; }
+  .menu__links { display: grid; gap: 0.25rem; }
+  .menu__links a { display: block; padding-block: 0.4rem; font-size: var(--step-lead); font-weight: 600; letter-spacing: -0.02em; text-decoration: none; }
+  .menu__bottom { display: grid; gap: 1rem; margin-top: auto; }
+  .menu__phone { font-size: var(--step-body); font-weight: 600; }
+
+  @media (max-width: 1180px) {
+    .header__phone { display: none; }
+  }
+  @media (max-width: 960px) {
+    .header { padding-inline: var(--gutter); }
+    .header__nav, .header__cta { display: none; }
+    .header__menu { display: block; }
+  }
+</style>
+
+<script>
+  import { prefersReducedMotion, focusQuietly } from '../lib/motion';
+
+  const menu = document.querySelector<HTMLDialogElement>('[data-menu]');
+  const opener = document.querySelector<HTMLButtonElement>('[data-menu-open]');
+  if (menu && opener) {
+    opener.addEventListener('click', () => menu.showModal());
+    menu.querySelector('[data-menu-close]')!.addEventListener('click', () => menu.close());
+    // The dialog returns focus to the opener on its own; Escape is handled by the browser.
+    menu.addEventListener('click', (e) => e.target === menu && menu.close());
+    menu.querySelectorAll<HTMLAnchorElement>('[data-menu-link]').forEach((a) =>
+      a.addEventListener('click', (e) => {
+        const target = document.querySelector<HTMLElement>(new URL(a.href).hash);
+        if (!target) return;
+        e.preventDefault();
+        menu.close();
+        history.pushState(null, '', a.hash);
+        target.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+        focusQuietly(target.querySelector<HTMLElement>('h2') ?? target);
+      }),
+    );
+  }
+</script>

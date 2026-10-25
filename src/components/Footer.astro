@@ -1,0 +1,52 @@
+---
+import { Picture } from 'astro:assets';
+import Logo from './Logo.astro';
+import { withBase } from '../lib/url';
+import { nav, site } from '../data/club';
+import { credits, photos } from '../data/photos';
+
+const links = [...nav.slice(0, 4), { href: '/#bron', label: 'Бронь' }, { href: '/#voprosy', label: 'Вопросы' }, nav[4]];
+---
+
+<footer class="footer dark">
+  <Picture src={photos.shade.src} alt="" formats={['avif', 'webp']} widths={[720, 1080]} sizes="(max-width: 960px) 100vw, 50vw" loading="lazy" class="footer__photo" />
+  <div class="footer__body">
+    <a href={withBase('/')} class="footer__logo" aria-label="Абажур, на главную"><Logo /></a>
+    <nav aria-label="Разделы сайта">
+      <ul role="list" class="footer__menu">
+        {links.map((l) => <li><a href={withBase(l.href)}>{l.label}</a></li>)}
+      </ul>
+    </nav>
+    <div class="footer__info">
+      <p>{site.address.street}<br />{site.address.metro}<br /><a href={site.phone.href}>{site.phone.display}</a></p>
+      <p>Зал и буткемп открыты круглосуточно. <a href={withBase('/privacy/')}>Политика конфиденциальности</a></p>
+    </div>
+    <p class="footer__legal small">
+      © 2026 «Абажур». Клуб вымышленный, это демо-проект студии Prokrutka. Цены, адрес и телефон придуманы.
+      Фото с Unsplash: {credits.map((c, i) => <><a href={c.url} rel="noopener">{c.author}</a>{i < credits.length - 1 ? ', ' : '.'}</>)}
+    </p>
+  </div>
+</footer>
+
+<style>
+  .footer { display: grid; grid-template-columns: 1fr 1fr; min-height: 100svh; }
+  .footer :global(.footer__photo), .footer :global(.footer__photo img) { width: 100%; height: 100%; object-fit: cover; }
+  .footer__body { display: flex; flex-direction: column; gap: 3rem; padding: 4rem var(--gutter) 2rem; }
+  .footer__logo { text-decoration: none; align-self: start; }
+  .footer__menu { display: grid; gap: 0.4rem; }
+  .footer__menu a {
+    display: inline-block; font-size: clamp(1.75rem, 1rem + 2vw, 2.75rem); font-weight: 600; letter-spacing: -0.02em; line-height: 1.15;
+    text-decoration: none; transition: translate 0.3s var(--ease), color 0.3s;
+  }
+  .footer__menu:hover a { color: var(--lamp-2); }
+  .footer__menu a:hover, .footer__menu a:focus-visible { color: var(--lamp); translate: 0.75rem 0; }
+  .footer__info { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; font-size: 1rem; }
+  .footer__legal { margin-top: auto; color: var(--lamp-2); }
+
+  @media (max-width: 960px) {
+    .footer { grid-template-columns: 1fr; min-height: 0; }
+    .footer :global(.footer__photo) { height: 50svh; }
+    .footer__body { padding-bottom: 7rem; }
+    .footer__info { grid-template-columns: 1fr; }
+  }
+</style>

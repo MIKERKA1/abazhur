@@ -1,0 +1,93 @@
+---
+import { Picture } from 'astro:assets';
+import { withBase } from '../../lib/url';
+import { packages, rub, zones } from '../../data/club';
+import { photos } from '../../data/photos';
+
+const [hall, camp, room] = zones as [typeof zones[0], typeof zones[0], typeof zones[0]];
+const groups = [
+  {
+    name: 'Зал, за место',
+    rows: [
+      { name: 'Будни, 10:00–17:00', price: hall.day, note: 'Самое тихое время, свободно почти всегда.' },
+      { name: 'Вечер, ночь и выходные', price: hall.evening, note: 'Лучше бронировать на пятницу и субботу.' },
+    ],
+  },
+  {
+    name: 'Буткемп, за место',
+    rows: [
+      { name: 'Будни, 10:00–17:00', price: camp.day, note: 'Всю комнату на пятерых бронируйте, отметив пять мест.' },
+      { name: 'Вечер, ночь и выходные', price: camp.evening, note: 'RTX 5080 и мониторы на 360 Гц.' },
+    ],
+  },
+  {
+    name: 'Комната с PS5, за комнату до 4 человек',
+    rows: [
+      { name: 'Будни, 10:00–17:00', price: room.day, note: 'Цена не зависит от того, сколько вас.' },
+      { name: 'Вечер и выходные', price: room.evening, note: 'Комнаты открыты с 10:00 до 04:00.' },
+    ],
+  },
+];
+const deals = [
+  { name: '3 часа в зале', price: packages.hall[3], note: 'Вечером выходит на 100 ₽ дешевле, чем по часам.' },
+  { name: '5 часов в зале', price: packages.hall[5], note: 'Вечером экономия 250 ₽.' },
+  { name: 'Ночь в зале, 23:00–08:00', price: packages.hall.night, note: 'Девять часов дешевле, чем четыре по вечернему тарифу.' },
+  { name: 'Ночь в буткемпе', price: packages.camp.night, note: 'За место. Только для гостей старше 18 лет.' },
+];
+---
+
+<section id="ceny" class="prices" data-scene="lamp" aria-labelledby="ceny-title">
+  <Picture src={photos.lamp.src} alt={photos.lamp.alt} formats={['avif', 'webp']} widths={[480, 960]} sizes="100vw" loading="lazy" class="prices__photo" />
+  <div data-reveal>
+    <h2 id="ceny-title" class="h2">Цены</h2>
+    <p class="prices__intro">Платите на выходе за фактическое время: минимум час, дальше по 30 минут. Без депозитов и клубных карт.</p>
+  </div>
+
+  {groups.map((g) => (
+    <div class="group" data-reveal>
+      <h3 class="group__name">{g.name}</h3>
+      <ul role="list">
+        {g.rows.map((r) => (
+          <li class="row">
+            <p class="row__line"><span>{r.name}</span><strong>{rub(r.price)} в час</strong></p>
+            <p class="row__note">{r.note}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  ))}
+
+  <div class="group group--deals" data-reveal>
+    <h3 class="group__name">Пакеты</h3>
+    <p class="row__note">Считаются сами: если пакет выходит дешевле, чем по часам, вы платите за пакет.</p>
+    <ul role="list">
+      {deals.map((r) => (
+        <li class="row">
+          <p class="row__line"><span>{r.name}</span><strong>{rub(r.price)}</strong></p>
+          <p class="row__note">{r.note}</p>
+        </li>
+      ))}
+    </ul>
+  </div>
+
+  <a class="btn prices__cta" href={withBase('/#bron')}>Посчитать стоимость на плане</a>
+</section>
+
+<style>
+  .prices { display: grid; gap: 3rem; }
+  .prices :global(.prices__photo) { display: none; }
+  .prices__intro { margin-top: 1rem; max-width: 40ch; }
+  .group__name { font-size: var(--step-lead); font-weight: 550; margin-bottom: 1.25rem; letter-spacing: -0.015em; }
+  .row + .row { margin-top: 1.4rem; }
+  .row__line { display: flex; justify-content: space-between; align-items: baseline; gap: 1.5rem; }
+  .row__line strong { font-weight: 600; white-space: nowrap; }
+  .row__note { font-size: 1rem; color: var(--ink-2); max-width: 36ch; }
+  .group--deals { padding: 2rem clamp(1.25rem, 3vw, 2rem); background: var(--paper-2); margin-inline: calc(clamp(1.25rem, 3vw, 2rem) * -1); }
+  .group--deals > .row__note { margin: -0.5rem 0 1.5rem; }
+  .prices__cta { justify-self: start; }
+
+  @media (max-width: 960px) {
+    .prices :global(.prices__photo) { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; }
+    .prices__cta { justify-self: stretch; }
+  }
+</style>

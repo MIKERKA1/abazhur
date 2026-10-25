@@ -1,0 +1,118 @@
+/* Абажур: tokens, reset and the few shared pieces. Everything else is scoped in components. */
+
+:root {
+  /* Linen of a lampshade by day, the dark room at night, and the light of the lamp itself. */
+  --paper: #e8dccb;
+  --paper-2: #ddcdb6;
+  --ink: #3e1219;
+  --ink-2: #6a3a3e;
+  --room: #170d0e;
+  --room-2: #251618;
+  --lamp: #f4ddb4;
+  --lamp-2: #c9ae88;
+  --taken: #5c4140;
+  --error: #9b1c1c;
+
+  --font: 'Bitter Variable', 'Bitter', Georgia, serif;
+  --step-small: 0.875rem;
+  --step-body: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
+  --step-lead: clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);
+  --step-head: clamp(2rem, 1.3rem + 2.4vw, 3.25rem);
+  --step-display: clamp(2.75rem, 1.2rem + 3.6vw, 4.75rem);
+
+  --gutter: clamp(1.25rem, 0.6rem + 3vw, 5rem);
+  --section: clamp(6rem, 4rem + 8vw, 13rem);
+  --header-h: 4rem;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --bg: var(--paper);
+  --fg: var(--ink);
+  --fg-2: var(--ink-2);
+  --focus: var(--ink);
+
+  color-scheme: light;
+}
+
+/* A dark ground flips the roles, so buttons, links and focus rings work the same way on it. */
+.dark {
+  --bg: var(--room);
+  --fg: var(--lamp);
+  --fg-2: var(--lamp-2);
+  --focus: var(--lamp);
+  background: var(--bg);
+  color: var(--fg);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; }
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--header-h) + 1rem);
+}
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+body {
+  min-height: 100svh;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font);
+  font-size: var(--step-body);
+  font-weight: 400;
+  line-height: 1.5;
+  font-variant-numeric: lining-nums tabular-nums;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+img, svg, picture { display: block; max-width: 100%; }
+img { height: auto; }
+input, button, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: inherit; text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
+a:hover { text-decoration-thickness: 2px; }
+p, li, dd { text-wrap: pretty; }
+h1, h2, h3 { font-weight: 600; line-height: 1.02; letter-spacing: -0.025em; text-wrap: balance; }
+ul[role='list'], ol[role='list'] { list-style: none; padding: 0; }
+
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+::selection { background: var(--ink); color: var(--paper); }
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  overflow: hidden; clip-path: inset(50%);
+  white-space: nowrap;
+}
+.skip-link {
+  position: fixed; left: 1rem; top: -4rem; z-index: 100;
+  padding: 0.75rem 1rem; background: var(--ink); color: var(--paper);
+}
+.skip-link:focus { top: 1rem; }
+
+.small { font-size: var(--step-small); line-height: 1.45; }
+.muted { color: var(--fg-2); }
+.h2 { font-size: var(--step-head); }
+.lead { font-size: var(--step-lead); line-height: 1.35; }
+
+/* One button shape for the whole site: square, flat, filled with the ink of its ground. */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem;
+  min-height: 3.25rem; padding: 0.75rem 1.6rem;
+  border: 0; border-radius: 0;
+  background: var(--fg); color: var(--bg);
+  font-weight: 600; text-decoration: none; text-align: center; line-height: 1.2;
+  transition: transform 0.18s var(--ease), background-color 0.2s;
+}
+.btn:hover { background: color-mix(in oklab, var(--fg) 86%, var(--bg)); }
+.btn:active { transform: scale(0.97); }
+.btn--quiet { background: color-mix(in oklab, var(--fg) 10%, var(--bg)); color: var(--fg); }
+.btn--quiet:hover { background: color-mix(in oklab, var(--fg) 18%, var(--bg)); }
+.link { font-weight: 600; }
+
+/* Entrances: hidden only when scripts run, so content never disappears without JavaScript. */
+.js [data-reveal] > * { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .js [data-reveal] > * { opacity: 1; }
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}

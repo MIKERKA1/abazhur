@@ -1,0 +1,63 @@
+---
+// The first visit printed as a receipt: what happens, how long it takes, and what you hold at the end.
+import { Picture } from 'astro:assets';
+import { firstVisit } from '../../data/club';
+import { photos } from '../../data/photos';
+import { zigzag } from '../../lib/zigzag';
+---
+
+<section id="vizit" class="visit" data-scene="lampRoom" aria-labelledby="vizit-title">
+  <Picture src={photos.lampRoom.src} alt={photos.lampRoom.alt} formats={['avif', 'webp']} widths={[480, 960]} sizes="100vw" loading="lazy" class="visit__photo" />
+  <div data-reveal>
+    <h2 id="vizit-title" class="h2">Первый раз в клубе?</h2>
+    <p class="visit__intro">Знать заранее ничего не нужно. Весь путь от двери до игры занимает минут пять, и на каждом шаге вам помогут.</p>
+  </div>
+  <div class="slip" data-clip={zigzag('bottom', 24, 10)} data-reveal>
+    {firstVisit.map((g) => (
+      <div class="slip__group">
+        <h3 class="slip__head">{g.group}</h3>
+        <ul role="list">
+          {g.rows.map(([what, time]) => (
+            <li class="slip__row"><span>{what}</span><span class="slip__dots" aria-hidden="true"></span><span class="slip__time">{time}</span></li>
+          ))}
+        </ul>
+      </div>
+    ))}
+    <p class="slip__total"><span>Вы уже играете</span><span>через 5 минут</span></p>
+  </div>
+</section>
+
+<style>
+  .visit {
+    display: grid; gap: 2.5rem;
+    margin-inline: calc(var(--gutter) * -1);
+    padding: clamp(4rem, 8vw, 7rem) var(--gutter);
+    background: var(--paper-2);
+  }
+  .visit :global(.visit__photo) { display: none; }
+  .visit__intro { margin-top: 1rem; max-width: 36ch; }
+  .slip { width: min(100%, 30rem); padding: 2rem 1.75rem 3rem; background: var(--paper); font-size: 1rem; }
+  .slip__group + .slip__group { margin-top: 1.75rem; }
+  .slip__head { font-size: var(--step-body); margin-bottom: 0.6rem; letter-spacing: 0; }
+  .slip__row { display: flex; align-items: baseline; gap: 0.5rem; }
+  .slip__row + .slip__row { margin-top: 0.5rem; }
+  .slip__row > span:first-child { flex: 0 1 auto; }
+  .slip__dots { flex: 1 0 1rem; border-bottom: 3px dotted var(--ink-2); translate: 0 -0.3em; }
+  .slip__time { white-space: nowrap; font-weight: 600; text-align: right; }
+  .slip__total {
+    display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    min-height: 2.75rem; margin: 2rem -1.75rem 0; padding: 0.5rem 1.75rem;
+    background: var(--ink); color: var(--paper); font-weight: 600;
+  }
+
+  @media (max-width: 960px) {
+    .visit { padding-top: 0; }
+    .visit :global(.visit__photo) { display: block; width: calc(100% + var(--gutter) * 2); max-width: none; margin-inline: calc(var(--gutter) * -1); aspect-ratio: 4 / 3; object-fit: cover; }
+  }
+  @media (max-width: 520px) {
+    .slip__row { flex-wrap: wrap; }
+    .slip__row > span:first-child { flex-basis: 100%; }
+    .slip__dots { display: none; }
+    .slip__time { font-size: 1rem; color: var(--ink-2); text-align: left; }
+  }
+</style>
